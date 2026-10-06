@@ -1,0 +1,12 @@
+{
+  "name": "bili-translate-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "stealth-fetch": "^0.2.2"
+  }
+}
