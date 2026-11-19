@@ -27,6 +27,21 @@ export default {
       });
     }
 
+    // 未配置密钥时拒绝服务，避免部署后意外开放。
+    if (!env.API_KEY) {
+      return Response.json({ error: "请配置 API_KEY" }, {
+        status: 503, headers: { "Access-Control-Allow-Origin": "*" },
+      });
+    }
+    const encoder = new TextEncoder();
+    const expected = encoder.encode("Bearer " + env.API_KEY);
+    const actual = encoder.encode(req.headers.get("Authorization") || "");
+    if (actual.length !== expected.length || !crypto.subtle.timingSafeEqual(actual, expected)) {
+      return Response.json({ error: "API Key 无效" }, {
+        status: 401, headers: { "Access-Control-Allow-Origin": "*" },
+      });
+    }
+
     // 解析请求体
     let body;
     try {

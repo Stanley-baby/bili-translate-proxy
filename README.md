@@ -39,6 +39,22 @@ npx wrangler deploy
 
 如果使用 Cloudflare Git 集成，推送后会自动执行 `npx wrangler deploy`，确保 `wrangler.toml` 存在即可。
 
+### 3.3 配置访问密钥（必填）
+
+在 Cloudflare 控制台打开该 Worker → Settings → Variables and Secrets → Add：
+- Type：Secret
+- Variable name：API_KEY
+- Value：你生成的随机密钥
+
+保存并部署。也可以通过命令行设置（按提示输入，不写进仓库）：
+
+    npx wrangler secret put API_KEY
+
+未配置时，POST 返回 503；没有正确密钥时返回 401。OPTIONS 预检无需密钥。
+调用时发送 Authorization: Bearer <你的密钥>。此密钥只保护你的 Worker，不会转发给 B 站。
+本地调试可将 API_KEY 放在 .dev.vars 文件中；该文件已经加入 .gitignore。
+运行 npm test 可检查密钥校验与原有转发行为。
+
 部署成功后会得到类似 `https://bili-translate-proxy.xxx.workers.dev` 的地址。
 
 > 建议绑定自定义域名，`*.workers.dev` 在国内部分地区可能无法访问。
@@ -50,7 +66,7 @@ npx wrangler deploy
 | 配置项 | 填写内容 |
 |--------|----------|
 | API 地址 | `https://你的Worker地址/v1/chat/completions` |
-| API Key | 任意非空字符串（如 `sk-any`） |
+| API Key | 与 Cloudflare 的 `API_KEY` 完全相同的值 |
 | 模型 | `Index-Translate-35B-A3B` |
 | 每秒最大请求数 | 3–5 |
 
@@ -58,11 +74,12 @@ npx wrangler deploy
 
 ## 5. 测试代理
 
-用 `curl` 验证：
+先在当前终端设置 API_KEY（不要提交到 Git），然后用 `curl` 验证：
 
 ```bash
 curl -X POST https://你的Worker地址/v1/chat/completions \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
   -d '{
     "model": "Index-Translate-35B-A3B",
     "messages": [{"role": "user", "content": "请将以下文本翻译为英语，直接输出翻译结果，不要进行任何解释。\n\n你好，世界。"}]
